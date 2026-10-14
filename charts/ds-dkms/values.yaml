@@ -1,0 +1,172 @@
+# Default values for ds-dkms.
+# Site overrides live in ds-gitops/<site>-services/dkms/values.yaml.
+#
+# The chart runs the three KERI protocol components as independent workloads:
+#   witness    — N replicas, each with its own AID, seed, DB and public ingress
+#   watcher    — optional (off by default for M36; verifiers query witnesses
+#                directly from IPEX grant OOBIs — see README)
+#   mesagkesto — a single messaging box AIDs use to exchange IPEX grants
+#
+# Secrets referenced below (dkms-witness-seeds, dkms-watcher-seed,
+# dkms-mesagkesto-seed) are expected to be provisioned out-of-band
+# (SealedSecret, External Secrets Operator, or `kubectl create secret`) — the
+# chart does NOT ship plaintext seeds.
+
+# ─── Global ──────────────────────────────────────────────────────────────────
+
+# Fully-qualified domain under which this site exposes DKMS endpoints.
+# Expected shape: dkms.<site>.<rootDomain>. Used to template Ingress hosts.
+baseDomain: ""
+
+# Image pull secrets to attach to every workload (optional).
+imagePullSecrets: []
+
+# Labels / annotations applied to every object the chart renders.
+commonLabels: {}
+commonAnnotations: {}
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+# ─── Witnesses ───────────────────────────────────────────────────────────────
+
+witness:
+  enabled: true
+  # 1 witness by default. KERI's quorum argument (F+1 of 2F+1) only pays off
+  # once witnesses are in different failure domains — on a single cluster all
+  # replicas share one domain anyway, and the extra pods / ingresses / seeds
+  # are pure overhead. Set replicaCount: 3 for multi-site or federated
+  # deployments where the F+1 property is real. Note: increasing the count
+  # later means rotating every AID whose inception event was anchored to the
+  # smaller witness set, so plan it against the AID lifecycle.
+  replicaCount: 1
+
+  image:
+    repository: ghcr.io/thclab/keriox-witness
+    tag: "0.18.0"
+    pullPolicy: IfNotPresent
+
+  # Each witness exposes its own URL. ``{idx}`` is replaced with 1..replicaCount.
+  # Default template: dkms-witness-{idx}.<baseDomain>
+  publicUrlPattern: ""
+
+  # Secret that holds each witness's KERI seed. Keys inside: witness1, witness2
+  # ... one per replica. If `witness.seedSecretName` is empty the chart renders
+  # an empty secret for the operator to fill — never puts plaintext seeds in
+  # values.yaml.
+  seedSecretName: dkms-witness-seeds
+
+  # Persistent storage for the witness's KERIpy DB (LMDB).
+  persistence:
+    enabled: true
+    storageClass: ""
+    accessModes: ["ReadWriteOnce"]
+    size: 1Gi
+
+  service:
+    port: 3232
+    type: ClusterIP
+
+  ingress:
+    enabled: true
+    className: nginx
+    annotations: {}
+    tls:
+      enabled: true
+      secretNamePattern: "dkms-witness-{idx}-tls"
+
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  # Extra env vars (optional).
+  extraEnv: []
+
+# ─── Watcher (optional) ──────────────────────────────────────────────────────
+
+watcher:
+  # On by default. Verifiers CAN go direct from an IPEX grant's OOBIs, but
+  # issuers running on this site (ds-credential-issuer) need to resolve an
+  # arbitrary subject AID's current KEL before minting a credential — the
+  # subject's witnesses may live at a different site or partner org. A
+  # locally-deployed watcher is the site's stable introduction point into
+  # the broader KERI network. Set to false only in verifier-only topologies.
+  enabled: true
+
+  image:
+    repository: ghcr.io/thclab/keriox-watcher
+    tag: "0.18.0"
+    pullPolicy: IfNotPresent
+
+  # Default public URL template: dkms-watcher.<baseDomain>
+  publicUrl: ""
+
+  # Witnesses this watcher subscribes to on first boot (OOBIs).
+  # Example:
+  #   initialOobis:
+  #     - "https://dkms-witness-1.hus.nextgen.hiro-develop.nl/oobi/BxxxWitness1Aid"
+  initialOobis: []
+
+  seedSecretName: dkms-watcher-seed
+
+  persistence:
+    enabled: true
+    storageClass: ""
+    accessModes: ["ReadWriteOnce"]
+    size: 1Gi
+
+  service:
+    port: 3235
+    type: ClusterIP
+
+  ingress:
+    enabled: false
+    className: nginx
+    annotations: {}
+    tls:
+      enabled: true
+      secretName: dkms-watcher-tls
+
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  extraEnv: []
+
+# ─── Mesagkesto ──────────────────────────────────────────────────────────────
+
+mesagkesto:
+  enabled: true
+
+  image:
+    repository: ghcr.io/thclab/mesagkesto
+    # Upstream has not published a stable release yet; latest tag at
+    # https://github.com/THCLab/mesagkesto/pkgs/container/mesagkesto .
+    tag: v0.2.1-alpha.1
+    pullPolicy: IfNotPresent
+
+  # Default public URL template: dkms-mesagkesto.<baseDomain>
+  publicUrl: ""
+
+  seedSecretName: dkms-mesagkesto-seed
+
+  service:
+    port: 8081
+    type: ClusterIP
+
+  ingress:
+    enabled: true
+    className: nginx
+    annotations: {}
+    tls:
+      enabled: true
+      secretName: dkms-mesagkesto-tls
+
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  extraEnv: []

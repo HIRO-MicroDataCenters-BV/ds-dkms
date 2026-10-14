@@ -1,0 +1,30 @@
+ds-dkms {{ .Chart.Version }} installed in namespace {{ .Release.Namespace }}.
+
+{{ if .Values.witness.enabled -}}
+Witnesses:
+{{- range $i, $_ := until (int .Values.witness.replicaCount) }}
+  - {{ include "ds-dkms.fullname" $ }}-witness-{{ $i }}  →  dkms-witness-{{ add1 $i }}.{{ $.Values.baseDomain | default "<baseDomain-not-set>" }}
+{{- end }}
+{{- end }}
+
+{{ if .Values.watcher.enabled -}}
+Watcher:
+  - {{ include "ds-dkms.fullname" . }}-watcher  →  {{ include "ds-dkms.watcher.publicUrl" . }}
+{{- end }}
+
+{{ if .Values.mesagkesto.enabled -}}
+Mesagkesto:
+  - {{ include "ds-dkms.fullname" . }}-mesagkesto  →  {{ include "ds-dkms.mesagkesto.publicUrl" . }}
+{{- end }}
+
+Next steps:
+  1) Make sure the seed secrets exist in the {{ .Release.Namespace }} namespace:
+     {{ if .Values.witness.enabled }}- {{ .Values.witness.seedSecretName }}{{ end }}
+     {{ if .Values.watcher.enabled }}- {{ .Values.watcher.seedSecretName }}{{ end }}
+     {{ if .Values.mesagkesto.enabled }}- {{ .Values.mesagkesto.seedSecretName }}{{ end }}
+     See the chart README for the seed-generation procedure.
+
+  2) Verify each witness has booted and announces its AID:
+       kubectl -n {{ .Release.Namespace }} exec {{ include "ds-dkms.fullname" . }}-witness-0 -- curl -sS localhost:{{ .Values.witness.service.port }}/oobi | head
+
+  3) Point your issuer / verifier at the witness URLs rendered above.

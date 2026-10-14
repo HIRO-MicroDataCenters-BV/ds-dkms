@@ -1,0 +1,52 @@
+# Local dev: brings up a minimal single-site DKMS stack (1 witness +
+# watcher + mesagkesto) that mirrors what the Helm chart deploys per site.
+# Hit the witness at http://localhost:3232, the watcher at
+# http://localhost:3235, and mesagkesto at http://localhost:8081.
+#
+# For a 3-witness lab topology, uncomment witness2 and witness3 below.
+
+services:
+  witness1:
+    image: ghcr.io/thclab/keriox-witness:0.18.0
+    container_name: dkms-witness1
+    ports: ["3232:3232"]
+    volumes:
+      - witness1-data:/var/lib/keriox
+    restart: unless-stopped
+
+  # witness2:
+  #   image: ghcr.io/thclab/keriox-witness:0.18.0
+  #   container_name: dkms-witness2
+  #   ports: ["3233:3232"]
+  #   volumes:
+  #     - witness2-data:/var/lib/keriox
+  #   restart: unless-stopped
+  #
+  # witness3:
+  #   image: ghcr.io/thclab/keriox-witness:0.18.0
+  #   container_name: dkms-witness3
+  #   ports: ["3234:3232"]
+  #   volumes:
+  #     - witness3-data:/var/lib/keriox
+  #   restart: unless-stopped
+
+  watcher:
+    image: ghcr.io/thclab/keriox-watcher:0.18.0
+    container_name: dkms-watcher
+    ports: ["3235:3235"]
+    volumes:
+      - watcher-data:/var/lib/keriox
+    restart: unless-stopped
+    depends_on: [witness1]
+
+  mesagkesto:
+    image: ghcr.io/thclab/mesagkesto:v0.2.1-alpha.1
+    container_name: dkms-mesagkesto
+    ports: ["8081:8081"]
+    restart: unless-stopped
+
+volumes:
+  witness1-data:
+  witness2-data:
+  witness3-data:
+  watcher-data:
