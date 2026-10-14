@@ -1,0 +1,64 @@
+{{- if .Values.witness.enabled -}}
+# Headless service for the StatefulSet — gives stable DNS names
+# <release>-witness-0.<release>-witness-headless, -1, -2 ...
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ds-dkms.fullname" . }}-witness-headless
+  labels:
+    {{- include "ds-dkms.witness.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  selector:
+    {{- include "ds-dkms.witness.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.witness.service.port }}
+      targetPort: http
+      protocol: TCP
+---
+# Plain ClusterIP that load-balances across all witness replicas. Callers that
+# don't need a specific witness can hit this; per-pod Services below are what
+# the Ingresses target so each witness URL maps to exactly one AID.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ds-dkms.fullname" . }}-witness
+  labels:
+    {{- include "ds-dkms.witness.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.witness.service.type }}
+  selector:
+    {{- include "ds-dkms.witness.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.witness.service.port }}
+      targetPort: http
+      protocol: TCP
+{{- $root := . }}
+{{- range $i, $_ := until (int .Values.witness.replicaCount) }}
+{{- $idx := add1 $i }}
+---
+# Per-pod Service — selects the single StatefulSet pod with the matching
+# statefulset.kubernetes.io/pod-name label. Each pod is a distinct keriox
+# witness with its own AID, so Ingresses MUST route per-pod rather than
+# round-robin across replicas.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ds-dkms.fullname" $root }}-witness-{{ $idx }}
+  labels:
+    {{- include "ds-dkms.witness.labels" $root | nindent 4 }}
+    app.kubernetes.io/instance-replica: witness-{{ $idx }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "ds-dkms.witness.selectorLabels" $root | nindent 4 }}
+    statefulset.kubernetes.io/pod-name: {{ include "ds-dkms.fullname" $root }}-witness-{{ $i }}
+  ports:
+    - name: http
+      port: {{ $root.Values.witness.service.port }}
+      targetPort: http
+      protocol: TCP
+{{- end }}
+{{- end }}

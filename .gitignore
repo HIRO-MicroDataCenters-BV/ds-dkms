@@ -1,0 +1,20 @@
+# Helm
+*.tgz
+charts/*/charts/
+charts/*/*.lock
+
+# Local renders / scratch
+rendered.yaml
+rendered-*.yaml
+.helmrender/
+.scratch/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.bak
+*.tmp
+*~

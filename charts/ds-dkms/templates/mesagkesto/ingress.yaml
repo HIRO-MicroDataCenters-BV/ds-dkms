@@ -1,0 +1,36 @@
+{{- if and .Values.mesagkesto.enabled .Values.mesagkesto.ingress.enabled -}}
+{{- $url := include "ds-dkms.mesagkesto.publicUrl" . -}}
+{{- $host := trimPrefix "https://" (trimPrefix "http://" $url) -}}
+{{- $host = $host | trimSuffix "/" -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "ds-dkms.fullname" . }}-mesagkesto
+  labels:
+    {{- include "ds-dkms.mesagkesto.labels" . | nindent 4 }}
+  {{- with .Values.mesagkesto.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.mesagkesto.ingress.className }}
+  ingressClassName: {{ .Values.mesagkesto.ingress.className }}
+  {{- end }}
+  {{- if .Values.mesagkesto.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ $host }}
+      secretName: {{ .Values.mesagkesto.ingress.tls.secretName }}
+  {{- end }}
+  rules:
+    - host: {{ $host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "ds-dkms.fullname" . }}-mesagkesto
+                port:
+                  number: {{ .Values.mesagkesto.service.port }}
+{{- end }}

@@ -1,0 +1,27 @@
+apiVersion: v2
+name: ds-dkms
+description: >
+  KERI DKMS stack for a NextGen EU dataspace node — witnesses, optional watcher
+  and mesagkesto. Packages the upstream THCLab keriox images into a single
+  deployable unit for Hiro-managed sites (HUS / KI / UVA / partners).
+type: application
+version: 0.1.0
+appVersion: "0.18.0"
+keywords:
+  - keri
+  - acdc
+  - dkms
+  - identity
+  - witness
+  - watcher
+  - mesagkesto
+  - nextgen
+home: https://github.com/HIRO-MicroDataCenters-BV/ds-dkms
+sources:
+  - https://github.com/HIRO-MicroDataCenters-BV/ds-dkms
+  - https://github.com/THCLab/keriox
+  - https://github.com/THCLab/mesagkesto
+maintainers:
+  - name: HIRO-MicroDataCenters
+    email: all-hiro@hiro-microdatacenters.nl
+icon: https://avatars.githubusercontent.com/u/129678543

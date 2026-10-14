@@ -1,0 +1,107 @@
+{{- if .Values.witness.enabled -}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "ds-dkms.fullname" . }}-witness
+  labels:
+    {{- include "ds-dkms.witness.labels" . | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  serviceName: {{ include "ds-dkms.fullname" . }}-witness-headless
+  replicas: {{ .Values.witness.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "ds-dkms.witness.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ds-dkms.witness.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "ds-dkms.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.witness.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.witness.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.witness.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: witness
+          image: "{{ .Values.witness.image.repository }}:{{ .Values.witness.image.tag }}"
+          imagePullPolicy: {{ .Values.witness.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.witness.service.port }}
+              protocol: TCP
+          env:
+            # KERIpy witness seed. The pod derives its index from the StatefulSet
+            # pod name (-0, -1, -2 ...); its seed key inside the shared secret
+            # follows the same 1-based convention: witness1, witness2, witness3.
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: WITNESS_INDEX
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['apps.kubernetes.io/pod-index']
+            # Fallback: parse the trailing number off POD_NAME at the entrypoint
+            # (the labels['apps.kubernetes.io/pod-index'] field is only
+            # populated on k8s 1.28+ with the PodIndexLabel feature gate).
+            - name: KERI_SEED
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.witness.seedSecretName }}
+                  # Resolved by the entrypoint using WITNESS_INDEX. If the
+                  # key is missing, keriox fails fast with a clear error.
+                  key: witness-seed
+                  optional: true
+            {{- with .Values.witness.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/keriox
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          {{- with .Values.witness.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+  {{- if .Values.witness.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          {{- range .Values.witness.persistence.accessModes }}
+          - {{ . | quote }}
+          {{- end }}
+        {{- if .Values.witness.persistence.storageClass }}
+        storageClassName: {{ .Values.witness.persistence.storageClass | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.witness.persistence.size | quote }}
+  {{- end }}
+{{- end }}

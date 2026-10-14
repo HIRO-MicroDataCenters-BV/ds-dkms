@@ -1,0 +1,71 @@
+{{- if .Values.mesagkesto.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ds-dkms.fullname" . }}-mesagkesto
+  labels:
+    {{- include "ds-dkms.mesagkesto.labels" . | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "ds-dkms.mesagkesto.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ds-dkms.mesagkesto.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "ds-dkms.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mesagkesto.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mesagkesto.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mesagkesto.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: mesagkesto
+          image: "{{ .Values.mesagkesto.image.repository }}:{{ .Values.mesagkesto.image.tag }}"
+          imagePullPolicy: {{ .Values.mesagkesto.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.mesagkesto.service.port }}
+              protocol: TCP
+          env:
+            - name: MESAGKESTO_SEED
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mesagkesto.seedSecretName }}
+                  key: mesagkesto-seed
+                  optional: true
+            {{- with .Values.mesagkesto.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          {{- with .Values.mesagkesto.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}

@@ -1,0 +1,43 @@
+# chart-testing values: single-site HUS deploy, M36 demo shape.
+# Deploys 1 witness + 1 watcher + mesagkesto. One cluster, one failure domain,
+# so the usual F+1 of 2F+1 quorum argument is theatre — keep it simple. Scale
+# to 3 once we federate beyond HUS (requires rotating any AIDs already
+# anchored to the 1-witness set).
+
+baseDomain: hus.nextgen.hiro-develop.nl
+
+witness:
+  enabled: true
+  replicaCount: 1
+  seedSecretName: dkms-witness-seeds
+  ingress:
+    enabled: true
+    className: nginx
+    tls:
+      enabled: true
+      secretNamePattern: "dkms-witness-{idx}-tls"
+
+watcher:
+  enabled: true
+  seedSecretName: dkms-watcher-seed
+  # Bootstrap OOBI for this site's own witness. Witness AID is generated at
+  # install time and committed to ds-gitops; placeholder replaced in the real
+  # deployment overlay.
+  initialOobis:
+    - "https://dkms-witness-1.hus.nextgen.hiro-develop.nl/oobi/placeholder-aid-1"
+  ingress:
+    enabled: true
+    className: nginx
+    tls:
+      enabled: true
+      secretName: dkms-watcher-tls
+
+mesagkesto:
+  enabled: true
+  seedSecretName: dkms-mesagkesto-seed
+  ingress:
+    enabled: true
+    className: nginx
+    tls:
+      enabled: true
+      secretName: dkms-mesagkesto-tls

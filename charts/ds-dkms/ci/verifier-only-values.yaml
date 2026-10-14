@@ -1,0 +1,27 @@
+# chart-testing values: lightweight verifier-only site.
+#
+# Watcher OFF — this site does not issue, only verifies credentials. The
+# verifier (ds-login) resolves KELs directly from the OOBIs embedded in each
+# incoming IPEX grant, so a locally-deployed watcher adds nothing on the
+# verify-only path. Keeps the stack to witness x3 + mesagkesto.
+
+baseDomain: verify-only.nextgen.hiro-develop.nl
+
+witness:
+  enabled: true
+  replicaCount: 1
+  seedSecretName: dkms-witness-seeds
+  ingress:
+    enabled: true
+
+watcher:
+  enabled: false
+
+mesagkesto:
+  enabled: true
+  seedSecretName: dkms-mesagkesto-seed
+  ingress:
+    enabled: true
+    tls:
+      enabled: true
+      secretName: dkms-mesagkesto-tls
