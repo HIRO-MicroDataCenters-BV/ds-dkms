@@ -35,8 +35,8 @@ spec:
       port: {{ .Values.witness.service.port }}
       targetPort: http
       protocol: TCP
-{{- $root := . -}}
-{{- range $i, $_ := until (int .Values.witness.replicaCount) -}}
+{{- $root := . }}
+{{- range $i, $_ := until (int .Values.witness.replicaCount) }}
 {{- $idx := add1 $i }}
 ---
 # Per-pod Service — selects the single StatefulSet pod with the matching
