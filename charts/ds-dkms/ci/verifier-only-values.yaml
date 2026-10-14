@@ -9,7 +9,7 @@ baseDomain: verify-only.nextgen.hiro-develop.nl
 
 witness:
   enabled: true
-  replicaCount: 3
+  replicaCount: 1
   seedSecretName: dkms-witness-seeds
   ingress:
     enabled: true

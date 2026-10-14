@@ -1,10 +1,9 @@
-# Local dev: brings up a single-site DKMS stack (3 witnesses + mesagkesto).
-# Mirrors what the Helm chart deploys in-cluster. For verifier/issuer tests
-# you can hit witness endpoints at http://localhost:3232/3233/3234.
+# Local dev: brings up a minimal single-site DKMS stack (1 witness +
+# watcher + mesagkesto) that mirrors what the Helm chart deploys per site.
+# Hit the witness at http://localhost:3232, the watcher at
+# http://localhost:3235, and mesagkesto at http://localhost:8081.
 #
-# The watcher is OFF by default to match the M36 topology (verifiers query
-# witnesses directly from IPEX grant OOBIs — see README for the architecture
-# rationale). Set WATCHER=1 to add it in.
+# For a 3-witness lab topology, uncomment witness2 and witness3 below.
 
 services:
   witness1:
@@ -15,29 +14,22 @@ services:
       - witness1-data:/var/lib/keriox
     restart: unless-stopped
 
-  witness2:
-    image: ghcr.io/thclab/keriox-witness:0.18.0
-    container_name: dkms-witness2
-    ports: ["3233:3232"]
-    volumes:
-      - witness2-data:/var/lib/keriox
-    restart: unless-stopped
+  # witness2:
+  #   image: ghcr.io/thclab/keriox-witness:0.18.0
+  #   container_name: dkms-witness2
+  #   ports: ["3233:3232"]
+  #   volumes:
+  #     - witness2-data:/var/lib/keriox
+  #   restart: unless-stopped
+  #
+  # witness3:
+  #   image: ghcr.io/thclab/keriox-witness:0.18.0
+  #   container_name: dkms-witness3
+  #   ports: ["3234:3232"]
+  #   volumes:
+  #     - witness3-data:/var/lib/keriox
+  #   restart: unless-stopped
 
-  witness3:
-    image: ghcr.io/thclab/keriox-witness:0.18.0
-    container_name: dkms-witness3
-    ports: ["3234:3232"]
-    volumes:
-      - witness3-data:/var/lib/keriox
-    restart: unless-stopped
-
-  mesagkesto:
-    image: ghcr.io/thclab/mesagkesto:v0.2.1-alpha.1
-    container_name: dkms-mesagkesto
-    ports: ["8081:8081"]
-    restart: unless-stopped
-
-  # Optional watcher — brought up with: WATCHER=1 docker compose up
   watcher:
     image: ghcr.io/thclab/keriox-watcher:0.18.0
     container_name: dkms-watcher
@@ -45,8 +37,13 @@ services:
     volumes:
       - watcher-data:/var/lib/keriox
     restart: unless-stopped
-    profiles: [watcher]
-    depends_on: [witness1, witness2, witness3]
+    depends_on: [witness1]
+
+  mesagkesto:
+    image: ghcr.io/thclab/mesagkesto:v0.2.1-alpha.1
+    container_name: dkms-mesagkesto
+    ports: ["8081:8081"]
+    restart: unless-stopped
 
 volumes:
   witness1-data:

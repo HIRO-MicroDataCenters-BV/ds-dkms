@@ -4,7 +4,7 @@ Hiro-owned Helm chart for a KERI DKMS stack — the identity backbone of the Nex
 
 | Component  | Image                                       | Default state |
 |------------|---------------------------------------------|---------------|
-| Witness    | `ghcr.io/thclab/keriox-witness:0.18.0`      | **enabled**, 3 replicas |
+| Witness    | `ghcr.io/thclab/keriox-witness:0.18.0`      | **enabled**, 1 replica (scale to 3 when federating) |
 | Watcher    | `ghcr.io/thclab/keriox-watcher:0.18.0`      | **enabled**, 1 replica |
 | Mesagkesto | `ghcr.io/thclab/mesagkesto:v0.2.1-alpha.1`  | **enabled**, 1 replica |
 
@@ -50,10 +50,11 @@ mesagkesto:
 
 That renders:
 
-- `StatefulSet ds-dkms-witness` with 3 pods, each exposed at `dkms-witness-{1,2,3}.hus.nextgen.hiro-develop.nl`
+- `StatefulSet ds-dkms-witness` with 1 pod (scale `witness.replicaCount` for multi-witness topologies), exposed at `dkms-witness-1.hus.nextgen.hiro-develop.nl`
+- `Deployment ds-dkms-watcher` at `dkms-watcher.hus.nextgen.hiro-develop.nl`
 - `Deployment ds-dkms-mesagkesto` at `dkms-mesagkesto.hus.nextgen.hiro-develop.nl`
 - Per-pod Services + per-pod Ingresses so each witness URL maps to a single AID (witnesses are not interchangeable)
-- One PVC per witness pod (`data-ds-dkms-witness-0/1/2`) for the KERIpy LMDB
+- One PVC per witness pod (`data-ds-dkms-witness-0`) for the KERIpy LMDB
 
 ## Seeds
 
