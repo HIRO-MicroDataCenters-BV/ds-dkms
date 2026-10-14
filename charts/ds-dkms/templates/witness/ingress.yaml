@@ -1,0 +1,46 @@
+{{- if and .Values.witness.enabled .Values.witness.ingress.enabled -}}
+{{- $root := . -}}
+{{- $publicUrlPattern := include "ds-dkms.witness.publicUrlPattern" . -}}
+{{- range $i, $_ := until (int .Values.witness.replicaCount) -}}
+{{- $idx := add1 $i -}}
+{{- $url := $publicUrlPattern | replace "{idx}" (toString $idx) -}}
+{{- $host := trimPrefix "https://" (trimPrefix "http://" $url) -}}
+{{- $host = $host | trimSuffix "/" -}}
+{{- $tlsSecret := $root.Values.witness.ingress.tls.secretNamePattern | replace "{idx}" (toString $idx) -}}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "ds-dkms.fullname" $root }}-witness-{{ $idx }}
+  labels:
+    {{- include "ds-dkms.witness.labels" $root | nindent 4 }}
+    app.kubernetes.io/instance-replica: witness-{{ $idx }}
+  {{- with $root.Values.witness.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if $root.Values.witness.ingress.className }}
+  ingressClassName: {{ $root.Values.witness.ingress.className }}
+  {{- end }}
+  {{- if $root.Values.witness.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ $host }}
+      secretName: {{ $tlsSecret }}
+  {{- end }}
+  rules:
+    - host: {{ $host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                # Target the per-pod Service rendered by witness/service.yaml
+                # — each ingress reaches exactly one witness pod / AID.
+                name: {{ include "ds-dkms.fullname" $root }}-witness-{{ $idx }}
+                port:
+                  number: {{ $root.Values.witness.service.port }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,90 @@
+{{- if .Values.watcher.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ds-dkms.fullname" . }}-watcher
+  labels:
+    {{- include "ds-dkms.watcher.labels" . | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: 1
+  strategy:
+    # Watcher owns a KERIpy LMDB on a PVC — rolling update would race on the
+    # same volume. Recreate is correct for a single-instance stateful service.
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "ds-dkms.watcher.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ds-dkms.watcher.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "ds-dkms.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.watcher.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.watcher.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.watcher.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: watcher
+          image: "{{ .Values.watcher.image.repository }}:{{ .Values.watcher.image.tag }}"
+          imagePullPolicy: {{ .Values.watcher.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.watcher.service.port }}
+              protocol: TCP
+          env:
+            - name: KERI_SEED
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.watcher.seedSecretName }}
+                  key: watcher-seed
+                  optional: true
+            {{- if .Values.watcher.initialOobis }}
+            - name: KERI_INITIAL_OOBIS
+              value: {{ join "," .Values.watcher.initialOobis | quote }}
+            {{- end }}
+            {{- with .Values.watcher.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/keriox
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          {{- with .Values.watcher.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      volumes:
+        - name: data
+          {{- if .Values.watcher.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "ds-dkms.fullname" . }}-watcher
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+{{- end }}

@@ -1,0 +1,55 @@
+# Local dev: brings up a single-site DKMS stack (3 witnesses + mesagkesto).
+# Mirrors what the Helm chart deploys in-cluster. For verifier/issuer tests
+# you can hit witness endpoints at http://localhost:3232/3233/3234.
+#
+# The watcher is OFF by default to match the M36 topology (verifiers query
+# witnesses directly from IPEX grant OOBIs — see README for the architecture
+# rationale). Set WATCHER=1 to add it in.
+
+services:
+  witness1:
+    image: ghcr.io/thclab/keriox-witness:0.18.0
+    container_name: dkms-witness1
+    ports: ["3232:3232"]
+    volumes:
+      - witness1-data:/var/lib/keriox
+    restart: unless-stopped
+
+  witness2:
+    image: ghcr.io/thclab/keriox-witness:0.18.0
+    container_name: dkms-witness2
+    ports: ["3233:3232"]
+    volumes:
+      - witness2-data:/var/lib/keriox
+    restart: unless-stopped
+
+  witness3:
+    image: ghcr.io/thclab/keriox-witness:0.18.0
+    container_name: dkms-witness3
+    ports: ["3234:3232"]
+    volumes:
+      - witness3-data:/var/lib/keriox
+    restart: unless-stopped
+
+  mesagkesto:
+    image: ghcr.io/thclab/mesagkesto:v0.2.1-alpha.1
+    container_name: dkms-mesagkesto
+    ports: ["8081:8081"]
+    restart: unless-stopped
+
+  # Optional watcher — brought up with: WATCHER=1 docker compose up
+  watcher:
+    image: ghcr.io/thclab/keriox-watcher:0.18.0
+    container_name: dkms-watcher
+    ports: ["3235:3235"]
+    volumes:
+      - watcher-data:/var/lib/keriox
+    restart: unless-stopped
+    profiles: [watcher]
+    depends_on: [witness1, witness2, witness3]
+
+volumes:
+  witness1-data:
+  witness2-data:
+  witness3-data:
+  watcher-data:

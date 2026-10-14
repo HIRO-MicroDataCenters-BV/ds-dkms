@@ -1,0 +1,36 @@
+{{- if and .Values.watcher.enabled .Values.watcher.ingress.enabled -}}
+{{- $url := include "ds-dkms.watcher.publicUrl" . -}}
+{{- $host := trimPrefix "https://" (trimPrefix "http://" $url) -}}
+{{- $host = $host | trimSuffix "/" -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "ds-dkms.fullname" . }}-watcher
+  labels:
+    {{- include "ds-dkms.watcher.labels" . | nindent 4 }}
+  {{- with .Values.watcher.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.watcher.ingress.className }}
+  ingressClassName: {{ .Values.watcher.ingress.className }}
+  {{- end }}
+  {{- if .Values.watcher.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ $host }}
+      secretName: {{ .Values.watcher.ingress.tls.secretName }}
+  {{- end }}
+  rules:
+    - host: {{ $host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "ds-dkms.fullname" . }}-watcher
+                port:
+                  number: {{ .Values.watcher.service.port }}
+{{- end }}

@@ -1,0 +1,162 @@
+# Default values for ds-dkms.
+# Site overrides live in ds-gitops/<site>-services/dkms/values.yaml.
+#
+# The chart runs the three KERI protocol components as independent workloads:
+#   witness    — N replicas, each with its own AID, seed, DB and public ingress
+#   watcher    — optional (off by default for M36; verifiers query witnesses
+#                directly from IPEX grant OOBIs — see README)
+#   mesagkesto — a single messaging box AIDs use to exchange IPEX grants
+#
+# Secrets referenced below (dkms-witness-seeds, dkms-watcher-seed,
+# dkms-mesagkesto-seed) are expected to be provisioned out-of-band
+# (SealedSecret, External Secrets Operator, or `kubectl create secret`) — the
+# chart does NOT ship plaintext seeds.
+
+# ─── Global ──────────────────────────────────────────────────────────────────
+
+# Fully-qualified domain under which this site exposes DKMS endpoints.
+# Expected shape: dkms.<site>.<rootDomain>. Used to template Ingress hosts.
+baseDomain: ""
+
+# Image pull secrets to attach to every workload (optional).
+imagePullSecrets: []
+
+# Labels / annotations applied to every object the chart renders.
+commonLabels: {}
+commonAnnotations: {}
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+# ─── Witnesses ───────────────────────────────────────────────────────────────
+
+witness:
+  enabled: true
+  replicaCount: 3
+
+  image:
+    repository: ghcr.io/thclab/keriox-witness
+    tag: "0.18.0"
+    pullPolicy: IfNotPresent
+
+  # Each witness exposes its own URL. ``{idx}`` is replaced with 1..replicaCount.
+  # Default template: dkms-witness-{idx}.<baseDomain>
+  publicUrlPattern: ""
+
+  # Secret that holds each witness's KERI seed. Keys inside: witness1, witness2
+  # ... one per replica. If `witness.seedSecretName` is empty the chart renders
+  # an empty secret for the operator to fill — never puts plaintext seeds in
+  # values.yaml.
+  seedSecretName: dkms-witness-seeds
+
+  # Persistent storage for the witness's KERIpy DB (LMDB).
+  persistence:
+    enabled: true
+    storageClass: ""
+    accessModes: ["ReadWriteOnce"]
+    size: 1Gi
+
+  service:
+    port: 3232
+    type: ClusterIP
+
+  ingress:
+    enabled: true
+    className: nginx
+    annotations: {}
+    tls:
+      enabled: true
+      secretNamePattern: "dkms-witness-{idx}-tls"
+
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  # Extra env vars (optional).
+  extraEnv: []
+
+# ─── Watcher (optional) ──────────────────────────────────────────────────────
+
+watcher:
+  # Off for M36 demo. Verifiers resolve KEL/TEL by querying issuer witnesses
+  # directly, using the OOBIs embedded in each IPEX grant. Re-enable per-site
+  # once we want caching + witness-reachability shielding.
+  enabled: false
+
+  image:
+    repository: ghcr.io/thclab/keriox-watcher
+    tag: "0.18.0"
+    pullPolicy: IfNotPresent
+
+  # Default public URL template: dkms-watcher.<baseDomain>
+  publicUrl: ""
+
+  # Witnesses this watcher subscribes to on first boot (OOBIs).
+  # Example:
+  #   initialOobis:
+  #     - "https://dkms-witness-1.hus.nextgen.hiro-develop.nl/oobi/BxxxWitness1Aid"
+  initialOobis: []
+
+  seedSecretName: dkms-watcher-seed
+
+  persistence:
+    enabled: true
+    storageClass: ""
+    accessModes: ["ReadWriteOnce"]
+    size: 1Gi
+
+  service:
+    port: 3235
+    type: ClusterIP
+
+  ingress:
+    enabled: false
+    className: nginx
+    annotations: {}
+    tls:
+      enabled: true
+      secretName: dkms-watcher-tls
+
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  extraEnv: []
+
+# ─── Mesagkesto ──────────────────────────────────────────────────────────────
+
+mesagkesto:
+  enabled: true
+
+  image:
+    repository: ghcr.io/thclab/mesagkesto
+    # Upstream has not published a stable release yet; latest tag at
+    # https://github.com/THCLab/mesagkesto/pkgs/container/mesagkesto .
+    tag: v0.2.1-alpha.1
+    pullPolicy: IfNotPresent
+
+  # Default public URL template: dkms-mesagkesto.<baseDomain>
+  publicUrl: ""
+
+  seedSecretName: dkms-mesagkesto-seed
+
+  service:
+    port: 8081
+    type: ClusterIP
+
+  ingress:
+    enabled: true
+    className: nginx
+    annotations: {}
+    tls:
+      enabled: true
+      secretName: dkms-mesagkesto-tls
+
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  extraEnv: []

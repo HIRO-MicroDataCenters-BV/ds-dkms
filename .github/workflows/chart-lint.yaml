@@ -1,0 +1,41 @@
+name: Chart lint
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.16.0
+
+      - name: Helm lint — defaults
+        run: helm lint charts/ds-dkms
+
+      - name: Helm lint — HUS single-site preset
+        run: helm lint charts/ds-dkms --values charts/ds-dkms/ci/hus-single-site-values.yaml
+
+      - name: Helm lint — with-watcher preset
+        run: helm lint charts/ds-dkms --values charts/ds-dkms/ci/with-watcher-values.yaml
+
+      - name: Helm template dry-run (HUS preset)
+        run: helm template ds-dkms charts/ds-dkms --values charts/ds-dkms/ci/hus-single-site-values.yaml > /tmp/rendered.yaml
+
+      - name: Helm template dry-run (with watcher)
+        run: helm template ds-dkms charts/ds-dkms --values charts/ds-dkms/ci/with-watcher-values.yaml > /tmp/rendered-watcher.yaml
+
+      - name: Validate against k8s API with kubeconform
+        run: |
+          curl -sSLo kubeconform.tar.gz https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz
+          tar xzf kubeconform.tar.gz
+          sudo mv kubeconform /usr/local/bin/
+          kubeconform -strict -ignore-missing-schemas -summary /tmp/rendered.yaml
+          kubeconform -strict -ignore-missing-schemas -summary /tmp/rendered-watcher.yaml

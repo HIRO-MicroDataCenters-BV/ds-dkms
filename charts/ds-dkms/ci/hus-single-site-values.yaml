@@ -1,0 +1,28 @@
+# chart-testing values: single-site HUS deploy, M36 demo shape.
+# Deploys 3 witnesses + mesagkesto, no watcher.
+
+baseDomain: hus.nextgen.hiro-develop.nl
+
+witness:
+  enabled: true
+  replicaCount: 3
+  seedSecretName: dkms-witness-seeds
+  ingress:
+    enabled: true
+    className: nginx
+    tls:
+      enabled: true
+      secretNamePattern: "dkms-witness-{idx}-tls"
+
+watcher:
+  enabled: false
+
+mesagkesto:
+  enabled: true
+  seedSecretName: dkms-mesagkesto-seed
+  ingress:
+    enabled: true
+    className: nginx
+    tls:
+      enabled: true
+      secretName: dkms-mesagkesto-tls
