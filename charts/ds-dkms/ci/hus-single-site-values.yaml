@@ -1,5 +1,9 @@
 # chart-testing values: single-site HUS deploy, M36 demo shape.
-# Deploys 3 witnesses + mesagkesto, no watcher.
+# Deploys 3 witnesses + 1 watcher + mesagkesto. The watcher is on because
+# ds-credential-issuer at this site needs to resolve arbitrary subject AIDs'
+# KELs before minting credentials (subjects may live at a different site or
+# partner); the watcher is the site's introduction point into the broader
+# KERI network.
 
 baseDomain: hus.nextgen.hiro-develop.nl
 
@@ -15,7 +19,21 @@ witness:
       secretNamePattern: "dkms-witness-{idx}-tls"
 
 watcher:
-  enabled: false
+  enabled: true
+  seedSecretName: dkms-watcher-seed
+  # Bootstrap OOBIs for this site's own witnesses — witness AIDs are generated
+  # per-partner and committed to ds-gitops. Placeholders here get replaced in
+  # the real deployment overlay.
+  initialOobis:
+    - "https://dkms-witness-1.hus.nextgen.hiro-develop.nl/oobi/placeholder-aid-1"
+    - "https://dkms-witness-2.hus.nextgen.hiro-develop.nl/oobi/placeholder-aid-2"
+    - "https://dkms-witness-3.hus.nextgen.hiro-develop.nl/oobi/placeholder-aid-3"
+  ingress:
+    enabled: true
+    className: nginx
+    tls:
+      enabled: true
+      secretName: dkms-watcher-tls
 
 mesagkesto:
   enabled: true

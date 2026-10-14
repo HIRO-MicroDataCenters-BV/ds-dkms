@@ -20,22 +20,22 @@ jobs:
       - name: Helm lint — defaults
         run: helm lint charts/ds-dkms
 
-      - name: Helm lint — HUS single-site preset
+      - name: Helm lint — HUS single-site preset (issuer+verifier, watcher on)
         run: helm lint charts/ds-dkms --values charts/ds-dkms/ci/hus-single-site-values.yaml
 
-      - name: Helm lint — with-watcher preset
-        run: helm lint charts/ds-dkms --values charts/ds-dkms/ci/with-watcher-values.yaml
+      - name: Helm lint — verifier-only preset (watcher off)
+        run: helm lint charts/ds-dkms --values charts/ds-dkms/ci/verifier-only-values.yaml
 
       - name: Helm template dry-run (HUS preset)
-        run: helm template ds-dkms charts/ds-dkms --values charts/ds-dkms/ci/hus-single-site-values.yaml > /tmp/rendered.yaml
+        run: helm template ds-dkms charts/ds-dkms --values charts/ds-dkms/ci/hus-single-site-values.yaml > /tmp/rendered-hus.yaml
 
-      - name: Helm template dry-run (with watcher)
-        run: helm template ds-dkms charts/ds-dkms --values charts/ds-dkms/ci/with-watcher-values.yaml > /tmp/rendered-watcher.yaml
+      - name: Helm template dry-run (verifier-only)
+        run: helm template ds-dkms charts/ds-dkms --values charts/ds-dkms/ci/verifier-only-values.yaml > /tmp/rendered-verifier.yaml
 
       - name: Validate against k8s API with kubeconform
         run: |
           curl -sSLo kubeconform.tar.gz https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz
           tar xzf kubeconform.tar.gz
           sudo mv kubeconform /usr/local/bin/
-          kubeconform -strict -ignore-missing-schemas -summary /tmp/rendered.yaml
-          kubeconform -strict -ignore-missing-schemas -summary /tmp/rendered-watcher.yaml
+          kubeconform -strict -ignore-missing-schemas -summary /tmp/rendered-hus.yaml
+          kubeconform -strict -ignore-missing-schemas -summary /tmp/rendered-verifier.yaml

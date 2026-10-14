@@ -81,10 +81,13 @@ witness:
 # ─── Watcher (optional) ──────────────────────────────────────────────────────
 
 watcher:
-  # Off for M36 demo. Verifiers resolve KEL/TEL by querying issuer witnesses
-  # directly, using the OOBIs embedded in each IPEX grant. Re-enable per-site
-  # once we want caching + witness-reachability shielding.
-  enabled: false
+  # On by default. Verifiers CAN go direct from an IPEX grant's OOBIs, but
+  # issuers running on this site (ds-credential-issuer) need to resolve an
+  # arbitrary subject AID's current KEL before minting a credential — the
+  # subject's witnesses may live at a different site or partner org. A
+  # locally-deployed watcher is the site's stable introduction point into
+  # the broader KERI network. Set to false only in verifier-only topologies.
+  enabled: true
 
   image:
     repository: ghcr.io/thclab/keriox-watcher

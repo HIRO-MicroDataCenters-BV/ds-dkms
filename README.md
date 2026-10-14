@@ -5,14 +5,17 @@ Hiro-owned Helm chart for a KERI DKMS stack — the identity backbone of the Nex
 | Component  | Image                                       | Default state |
 |------------|---------------------------------------------|---------------|
 | Witness    | `ghcr.io/thclab/keriox-witness:0.18.0`      | **enabled**, 3 replicas |
-| Watcher    | `ghcr.io/thclab/keriox-watcher:0.18.0`      | **disabled** (see architecture note) |
+| Watcher    | `ghcr.io/thclab/keriox-watcher:0.18.0`      | **enabled**, 1 replica |
 | Mesagkesto | `ghcr.io/thclab/mesagkesto:v0.2.1-alpha.1`  | **enabled**, 1 replica |
 
-## Architecture note — why watcher is off by default
+## Architecture note — issuer side vs verifier side
 
-The NextGen verifier (`ds-login`) accepts credentials issued by **any** DKMS-anchored party, not just the three HIRO sites. The verify flow extracts witness URLs from the OOBIs embedded in each IPEX grant and queries those witnesses directly for live KEL + TEL state. A HIRO-side watcher would only matter if we were trying to cache or pre-subscribe to known witnesses — which this open-federation model does not require.
+A HIRO site plays two KERI roles simultaneously:
 
-Enable the watcher once you want per-site caching, witness-reachability shielding, or an independent "second opinion" verifier layer. Set `watcher.enabled: true` and populate `watcher.initialOobis`.
+- **Verifier** (`ds-login`): accepts credentials issued by **any** DKMS-anchored party. The verify flow extracts witness URLs from the OOBIs embedded in each incoming IPEX grant and queries those witnesses directly for live KEL + TEL state — no local caching required.
+- **Issuer** (`ds-credential-issuer`): before minting an ACDC for an arbitrary subject AID, needs to resolve that subject's current signing key from their KEL. Subjects live wherever DKMS runs (another site, a partner org), so an issuer process needs a stable, locally-reachable introduction point into the broader KERI network. That's the watcher.
+
+So the chart ships watcher on by default — a Hiro site typically does both. For lightweight verifier-only sites (think: a partner institution that only consumes credentials, never issues), set `watcher.enabled: false`; see `ci/verifier-only-values.yaml` for that shape.
 
 ## Install
 
