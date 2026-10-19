@@ -52,11 +52,20 @@ witness:
   # Default template: dkms-witness-{idx}.<baseDomain>
   publicUrlPattern: ""
 
-  # Secret that holds each witness's KERI seed. Keys inside: witness1, witness2
-  # ... one per replica. If `witness.seedSecretName` is empty the chart renders
-  # an empty secret for the operator to fill — never puts plaintext seeds in
-  # values.yaml.
+  # KERI base64 seed that derives this witness's AID. The chart renders
+  # it directly into witness.yml (ConfigMap). The default below is a
+  # KNOWN TEST VALUE suitable for the local / M36 demo deploy — override
+  # per site with a value pulled from a SealedSecret before any real
+  # credential issuance. 44 chars, base64.
+  seed: "ArwXoACJgOleVZ2PY7kXn7rA0II0mHYDhc6WrBH8fDAc"
+  # Legacy: the chart used to env-inject KERI_SEED from this Secret. The
+  # upstream keriox binary reads its seed from witness.yml, not from the
+  # env, so this is kept only for backward compat with Fleet overlays
+  # that reference the name. Safe to leave as the default.
   seedSecretName: dkms-witness-seeds
+  # TCP timeout for escrow — bumped from default 60s only when a watcher
+  # chain is slow to respond.
+  escrowTimeout: 60
 
   # Persistent storage for the witness's KERIpy DB (LMDB).
   persistence:
@@ -110,7 +119,9 @@ watcher:
   #     - "https://dkms-witness-1.hus.nextgen.hiro-develop.nl/oobi/BxxxWitness1Aid"
   initialOobis: []
 
+  seed: "Alntkt3u6dDgiQxTATr01dy8M72uuaZEf9eTdM-70Gk8"
   seedSecretName: dkms-watcher-seed
+  escrowTimeout: 60
 
   persistence:
     enabled: true

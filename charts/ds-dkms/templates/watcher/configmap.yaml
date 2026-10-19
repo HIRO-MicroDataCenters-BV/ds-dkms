@@ -1,0 +1,29 @@
+{{- if .Values.watcher.enabled -}}
+# watcher.yml — see witness/configmap.yaml for context. Watcher wants an
+# additional tel_storage_path + initial_oobis list on top of what a
+# witness needs. For local / single-site demos initial_oobis can be
+# empty; the issuer-side verify flow seeds OOBIs from each grant.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ds-dkms.fullname" . }}-watcher-config
+  labels:
+    {{- include "ds-dkms.watcher.labels" . | nindent 4 }}
+data:
+  watcher.yml: |
+    db_path: "db/"
+    tel_storage_path: "db/tel_storage"
+    http_port: {{ .Values.watcher.service.port }}
+    public_url: {{ include "ds-dkms.watcher.publicUrl" . | quote }}
+    seed: {{ .Values.watcher.seed | required "watcher.seed is required (set to a 44-char KERI base64 seed; prod should pull from a SealedSecret)" | quote }}
+    initial_oobis:
+      {{- if .Values.watcher.initialOobis }}
+      {{- range .Values.watcher.initialOobis }}
+      - {{ . | toJson }}
+      {{- end }}
+      {{- else }}
+      []
+      {{- end }}
+    escrow_config:
+      default_timeout: {{ .Values.watcher.escrowTimeout | default 60 }}
+{{- end }}
