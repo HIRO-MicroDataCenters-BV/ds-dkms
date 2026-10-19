@@ -71,9 +71,16 @@ spec:
             {{- with .Values.witness.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
+          # workingDir pins /app so keriox resolves its relative db_path
+          # ("db/") against the mounted volume at /app/db.
+          workingDir: /app
           volumeMounts:
+            - name: witness-config
+              mountPath: /app/witness.yml
+              subPath: witness.yml
+              readOnly: true
             - name: data
-              mountPath: /var/lib/keriox
+              mountPath: /app/db
           readinessProbe:
             tcpSocket:
               port: http
@@ -88,6 +95,10 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+      volumes:
+        - name: witness-config
+          configMap:
+            name: {{ include "ds-dkms.fullname" . }}-witness-config
   {{- if .Values.witness.persistence.enabled }}
   volumeClaimTemplates:
     - metadata:
