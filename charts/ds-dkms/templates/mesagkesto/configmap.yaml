@@ -19,7 +19,10 @@ data:
     public_url: {{ include "ds-dkms.mesagkesto.publicUrl" . | quote }}
     seed: {{ .Values.mesagkesto.seed | required "mesagkesto.seed is required (set to a 44-char KERI base64 seed; prod should pull from a SealedSecret)" | quote }}
     server_key: {{ .Values.mesagkesto.serverKey | default "AAAAplaceholder:APA91placeholder-not-a-real-fcm-key" | quote }}
-    {{- if .Values.mesagkesto.watcherOobi }}
-    watcher_oobi: {{ .Values.mesagkesto.watcherOobi | quote }}
-    {{- end }}
+    # mesagkesto parses this field as REQUIRED (fails with
+    # "missing field `watcher_oobi`" when absent). Always emit — if the
+    # value is unset, we emit the JSON for a placeholder watcher so the
+    # parser is satisfied; override with your real watcher OOBI JSON once
+    # the watcher is up and its AID is known.
+    watcher_oobi: {{ .Values.mesagkesto.watcherOobi | default (printf "{\"eid\":\"B000000000000000000000000000000000000000000\",\"scheme\":\"http\",\"url\":\"http://%s-watcher:%d\"}" (include "ds-dkms.fullname" .) (int .Values.watcher.service.port)) | quote }}
 {{- end }}
