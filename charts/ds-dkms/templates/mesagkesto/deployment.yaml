@@ -54,6 +54,12 @@ spec:
             {{- with .Values.mesagkesto.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
+          workingDir: /app
+          volumeMounts:
+            - name: mesagkesto-config
+              mountPath: /app/messagebox.yml
+              subPath: messagebox.yml
+              readOnly: true
           readinessProbe:
             tcpSocket:
               port: http
@@ -68,4 +74,8 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+      volumes:
+        - name: mesagkesto-config
+          configMap:
+            name: {{ include "ds-dkms.fullname" . }}-mesagkesto-config
 {{- end }}

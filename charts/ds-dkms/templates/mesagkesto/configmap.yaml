@@ -1,0 +1,25 @@
+{{- if .Values.mesagkesto.enabled -}}
+# messagebox.yml — mesagkesto 0.2.1-alpha.1 reads this from /app on
+# startup and panics without it (missing field `oobi_path`). Shape taken
+# from Rafy's working 0.17.x compose. `server_key` is the FCM server key
+# used to push notifications to clients that subscribe; mesagkesto rejects
+# an empty string, so a placeholder is set here when none is provided —
+# override via mesagkesto.serverKey for a real FCM-enabled deploy.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ds-dkms.fullname" . }}-mesagkesto-config
+  labels:
+    {{- include "ds-dkms.mesagkesto.labels" . | nindent 4 }}
+data:
+  messagebox.yml: |
+    db_path: "./db/"
+    oobi_path: "./oobi/"
+    http_port: {{ .Values.mesagkesto.service.port }}
+    public_url: {{ include "ds-dkms.mesagkesto.publicUrl" . | quote }}
+    seed: {{ .Values.mesagkesto.seed | required "mesagkesto.seed is required (set to a 44-char KERI base64 seed; prod should pull from a SealedSecret)" | quote }}
+    server_key: {{ .Values.mesagkesto.serverKey | default "placeholder-no-fcm-configured" | quote }}
+    {{- if .Values.mesagkesto.watcherOobi }}
+    watcher_oobi: {{ .Values.mesagkesto.watcherOobi | quote }}
+    {{- end }}
+{{- end }}

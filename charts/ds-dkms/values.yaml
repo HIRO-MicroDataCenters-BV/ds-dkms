@@ -162,6 +162,14 @@ mesagkesto:
   # Default public URL template: dkms-mesagkesto.<baseDomain>
   publicUrl: ""
 
+  seed: "AMRXyU3ErhBNdRSDX1zKlrbZGRp1GfCmkRIa58gF07I8"
+  # FCM server key for push notifications. Empty string is rejected by
+  # mesagkesto; the chart falls back to a placeholder if unset. For a
+  # real FCM-enabled deploy override with your project's key.
+  serverKey: ""
+  # Optional watcher OOBI the message box subscribes to. If set, must be
+  # a JSON string: {"eid":"B...","scheme":"http","url":"..."}
+  watcherOobi: ""
   seedSecretName: dkms-mesagkesto-seed
 
   service:
