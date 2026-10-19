@@ -62,9 +62,14 @@ spec:
             {{- with .Values.watcher.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
+          workingDir: /app
           volumeMounts:
+            - name: watcher-config
+              mountPath: /app/watcher.yml
+              subPath: watcher.yml
+              readOnly: true
             - name: data
-              mountPath: /var/lib/keriox
+              mountPath: /app/db
           readinessProbe:
             tcpSocket:
               port: http
@@ -80,6 +85,9 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
       volumes:
+        - name: watcher-config
+          configMap:
+            name: {{ include "ds-dkms.fullname" . }}-watcher-config
         - name: data
           {{- if .Values.watcher.persistence.enabled }}
           persistentVolumeClaim:

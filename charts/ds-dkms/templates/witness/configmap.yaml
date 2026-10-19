@@ -1,0 +1,26 @@
+{{- if .Values.witness.enabled -}}
+# witness.yml the keriox-witness binary reads from /app/witness.yml at
+# startup. Without it the process panics on first boot
+# (DatabaseCreationFiled "No such file or directory") because keriox's
+# db_path field is unset. The ConfigMap is mounted via subPath so it
+# lands at the exact file name the binary expects.
+#
+# Seed is the KERI private seed that deterministically derives the
+# witness AID. For prod, override `witness.seed` from a SealedSecret /
+# External Secret value — see README. The default below is a known test
+# value (NOT for production).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ds-dkms.fullname" . }}-witness-config
+  labels:
+    {{- include "ds-dkms.witness.labels" . | nindent 4 }}
+data:
+  witness.yml: |
+    db_path: "db/"
+    http_port: {{ .Values.witness.service.port }}
+    public_url: {{ include "ds-dkms.witness.publicUrlPattern" . | replace "{idx}" "1" | quote }}
+    seed: {{ .Values.witness.seed | required "witness.seed is required (set to a 44-char KERI base64 seed; prod should pull from a SealedSecret)" | quote }}
+    escrow_config:
+      default_timeout: {{ .Values.witness.escrowTimeout | default 60 }}
+{{- end }}
