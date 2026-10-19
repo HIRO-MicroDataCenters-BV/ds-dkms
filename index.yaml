@@ -3,6 +3,36 @@ entries:
   ds-dkms:
   - apiVersion: v2
     appVersion: 0.17.13
+    created: "2026-10-19T12:10:55.411151308Z"
+    description: 'KERI DKMS stack for a NextGen EU dataspace node — witnesses, optional
+      watcher and mesagkesto. Packages the upstream THCLab keriox images into a single
+      deployable unit for Hiro-managed sites (HUS / KI / UVA / partners). '
+    digest: 9495e17c97f9592e9cca152699d153bd61c1110289dfc1ca4fa8f0c721b8745d
+    home: https://github.com/HIRO-MicroDataCenters-BV/ds-dkms
+    icon: https://avatars.githubusercontent.com/u/129678543
+    keywords:
+    - keri
+    - acdc
+    - dkms
+    - identity
+    - witness
+    - watcher
+    - mesagkesto
+    - nextgen
+    maintainers:
+    - email: all-hiro@hiro-microdatacenters.nl
+      name: HIRO-MicroDataCenters
+    name: ds-dkms
+    sources:
+    - https://github.com/HIRO-MicroDataCenters-BV/ds-dkms
+    - https://github.com/THCLab/keriox
+    - https://github.com/THCLab/mesagkesto
+    type: application
+    urls:
+    - https://github.com/HIRO-MicroDataCenters-BV/ds-dkms/releases/download/ds-dkms-0.1.3/ds-dkms-0.1.3.tgz
+    version: 0.1.3
+  - apiVersion: v2
+    appVersion: 0.17.13
     created: "2026-10-19T08:56:58.139498549Z"
     description: 'KERI DKMS stack for a NextGen EU dataspace node — witnesses, optional
       watcher and mesagkesto. Packages the upstream THCLab keriox images into a single
@@ -91,4 +121,4 @@ entries:
     urls:
     - https://github.com/HIRO-MicroDataCenters-BV/ds-dkms/releases/download/ds-dkms-0.1.0/ds-dkms-0.1.0.tgz
     version: 0.1.0
-generated: "2026-10-19T08:56:58.139511162Z"
+generated: "2026-10-19T12:10:55.411167407Z"
