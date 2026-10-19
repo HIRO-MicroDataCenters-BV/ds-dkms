@@ -45,7 +45,7 @@ witness:
 
   image:
     repository: ghcr.io/thclab/keriox-witness
-    tag: "0.18.0"
+    tag: "0.17.13"
     pullPolicy: IfNotPresent
 
   # Each witness exposes its own URL. ``{idx}`` is replaced with 1..replicaCount.
@@ -107,7 +107,7 @@ watcher:
 
   image:
     repository: ghcr.io/thclab/keriox-watcher
-    tag: "0.18.0"
+    tag: "0.17.13"
     pullPolicy: IfNotPresent
 
   # Default public URL template: dkms-watcher.<baseDomain>
