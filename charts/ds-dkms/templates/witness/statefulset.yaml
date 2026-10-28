@@ -45,32 +45,10 @@ spec:
             - name: http
               containerPort: {{ .Values.witness.service.port }}
               protocol: TCP
+          {{- with .Values.witness.extraEnv }}
           env:
-            # KERIpy witness seed. The pod derives its index from the StatefulSet
-            # pod name (-0, -1, -2 ...); its seed key inside the shared secret
-            # follows the same 1-based convention: witness1, witness2, witness3.
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: WITNESS_INDEX
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.labels['apps.kubernetes.io/pod-index']
-            # Fallback: parse the trailing number off POD_NAME at the entrypoint
-            # (the labels['apps.kubernetes.io/pod-index'] field is only
-            # populated on k8s 1.28+ with the PodIndexLabel feature gate).
-            - name: KERI_SEED
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.witness.seedSecretName }}
-                  # Resolved by the entrypoint using WITNESS_INDEX. If the
-                  # key is missing, keriox fails fast with a clear error.
-                  key: witness-seed
-                  optional: true
-            {{- with .Values.witness.extraEnv }}
             {{- toYaml . | nindent 12 }}
-            {{- end }}
+          {{- end }}
           # workingDir pins /app so keriox resolves its relative db_path
           # ("db/") against the mounted volume at /app/db.
           workingDir: /app

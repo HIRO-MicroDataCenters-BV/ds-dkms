@@ -44,16 +44,10 @@ spec:
             - name: http
               containerPort: {{ .Values.mesagkesto.service.port }}
               protocol: TCP
+          {{- with .Values.mesagkesto.extraEnv }}
           env:
-            - name: MESAGKESTO_SEED
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.mesagkesto.seedSecretName }}
-                  key: mesagkesto-seed
-                  optional: true
-            {{- with .Values.mesagkesto.extraEnv }}
             {{- toYaml . | nindent 12 }}
-            {{- end }}
+          {{- end }}
           workingDir: /app
           volumeMounts:
             - name: mesagkesto-config

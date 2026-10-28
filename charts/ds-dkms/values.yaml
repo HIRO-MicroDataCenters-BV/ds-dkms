@@ -7,10 +7,12 @@
 #                directly from IPEX grant OOBIs — see README)
 #   mesagkesto — a single messaging box AIDs use to exchange IPEX grants
 #
-# Secrets referenced below (dkms-witness-seeds, dkms-watcher-seed,
-# dkms-mesagkesto-seed) are expected to be provisioned out-of-band
-# (SealedSecret, External Secrets Operator, or `kubectl create secret`) — the
-# chart does NOT ship plaintext seeds.
+# Seeds: `witness.seed`, `watcher.seed` and `mesagkesto.seed` have NO default.
+# Each seed fixes that component's AID, so every site needs its own, generated
+# once (`dkms key seed`) and kept stable across deploys. Sites supply them as
+# Helm values from a SealedSecret via Fleet `helm.valuesFrom` — see
+# ds-gitops scripts/seal-dkms-seeds.sh. Rendering fails if a seed is missing,
+# rather than starting with a shared or random identity.
 
 # ─── Global ──────────────────────────────────────────────────────────────────
 
@@ -52,17 +54,10 @@ witness:
   # Default template: dkms-witness-{idx}.<baseDomain>
   publicUrlPattern: ""
 
-  # KERI base64 seed that derives this witness's AID. The chart renders
-  # it directly into witness.yml (ConfigMap). The default below is a
-  # KNOWN TEST VALUE suitable for the local / M36 demo deploy — override
-  # per site with a value pulled from a SealedSecret before any real
-  # credential issuance. 44 chars, base64.
-  seed: "ArwXoACJgOleVZ2PY7kXn7rA0II0mHYDhc6WrBH8fDAc"
-  # Legacy: the chart used to env-inject KERI_SEED from this Secret. The
-  # upstream keriox binary reads its seed from witness.yml, not from the
-  # env, so this is kept only for backward compat with Fleet overlays
-  # that reference the name. Safe to leave as the default.
-  seedSecretName: dkms-witness-seeds
+  # KERI seed (44-char qb64, `dkms key seed`) that derives this witness's
+  # AID. Rendered into witness.yml (ConfigMap). Required, no default:
+  # supply it per site from a SealedSecret (Fleet helm.valuesFrom).
+  seed: ""
   # TCP timeout for escrow — bumped from default 60s only when a watcher
   # chain is slow to respond.
   escrowTimeout: 60
@@ -119,8 +114,8 @@ watcher:
   #     - "https://dkms-witness-1.hus.nextgen.hiro-develop.nl/oobi/BxxxWitness1Aid"
   initialOobis: []
 
-  seed: "Alntkt3u6dDgiQxTATr01dy8M72uuaZEf9eTdM-70Gk8"
-  seedSecretName: dkms-watcher-seed
+  # KERI seed for the watcher AID. Required, no default (see header).
+  seed: ""
   escrowTimeout: 60
 
   persistence:
@@ -162,7 +157,8 @@ mesagkesto:
   # Default public URL template: dkms-mesagkesto.<baseDomain>
   publicUrl: ""
 
-  seed: "AMRXyU3ErhBNdRSDX1zKlrbZGRp1GfCmkRIa58gF07I8"
+  # KERI seed for the mesagkesto AID. Required, no default (see header).
+  seed: ""
   # FCM server key for push notifications. Empty string is rejected by
   # mesagkesto; the chart falls back to a placeholder if unset. For a
   # real FCM-enabled deploy override with your project's key.
@@ -170,7 +166,6 @@ mesagkesto:
   # Optional watcher OOBI the message box subscribes to. If set, must be
   # a JSON string: {"eid":"B...","scheme":"http","url":"..."}
   watcherOobi: ""
-  seedSecretName: dkms-mesagkesto-seed
 
   service:
     port: 8081

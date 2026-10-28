@@ -48,20 +48,10 @@ spec:
             - name: http
               containerPort: {{ .Values.watcher.service.port }}
               protocol: TCP
+          {{- with .Values.watcher.extraEnv }}
           env:
-            - name: KERI_SEED
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.watcher.seedSecretName }}
-                  key: watcher-seed
-                  optional: true
-            {{- if .Values.watcher.initialOobis }}
-            - name: KERI_INITIAL_OOBIS
-              value: {{ join "," .Values.watcher.initialOobis | quote }}
-            {{- end }}
-            {{- with .Values.watcher.extraEnv }}
             {{- toYaml . | nindent 12 }}
-            {{- end }}
+          {{- end }}
           workingDir: /app
           volumeMounts:
             - name: watcher-config

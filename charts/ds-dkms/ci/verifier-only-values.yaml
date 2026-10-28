@@ -10,7 +10,6 @@ baseDomain: verify-only.nextgen.hiro-develop.nl
 witness:
   enabled: true
   replicaCount: 1
-  seedSecretName: dkms-witness-seeds
   ingress:
     enabled: true
 
@@ -19,7 +18,6 @@ watcher:
 
 mesagkesto:
   enabled: true
-  seedSecretName: dkms-mesagkesto-seed
   ingress:
     enabled: true
     tls:

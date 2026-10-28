@@ -18,11 +18,8 @@ Mesagkesto:
 {{- end }}
 
 Next steps:
-  1) Make sure the seed secrets exist in the {{ .Release.Namespace }} namespace:
-     {{ if .Values.witness.enabled }}- {{ .Values.witness.seedSecretName }}{{ end }}
-     {{ if .Values.watcher.enabled }}- {{ .Values.watcher.seedSecretName }}{{ end }}
-     {{ if .Values.mesagkesto.enabled }}- {{ .Values.mesagkesto.seedSecretName }}{{ end }}
-     See the chart README for the seed-generation procedure.
+  1) Seeds come from your values (witness.seed, watcher.seed, mesagkesto.seed);
+     each one fixes that component's AID. Keep them per site and stable.
 
   2) Verify each witness has booted and announces its AID:
        kubectl -n {{ .Release.Namespace }} exec {{ include "ds-dkms.fullname" . }}-witness-0 -- curl -sS localhost:{{ .Values.witness.service.port }}/oobi | head
