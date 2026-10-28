@@ -9,7 +9,6 @@ baseDomain: hus.nextgen.hiro-develop.nl
 witness:
   enabled: true
   replicaCount: 1
-  seedSecretName: dkms-witness-seeds
   ingress:
     enabled: true
     className: nginx
@@ -19,7 +18,6 @@ witness:
 
 watcher:
   enabled: true
-  seedSecretName: dkms-watcher-seed
   # Bootstrap OOBI for this site's own witness. Witness AID is generated at
   # install time and committed to ds-gitops; placeholder replaced in the real
   # deployment overlay.
@@ -34,7 +32,6 @@ watcher:
 
 mesagkesto:
   enabled: true
-  seedSecretName: dkms-mesagkesto-seed
   ingress:
     enabled: true
     className: nginx

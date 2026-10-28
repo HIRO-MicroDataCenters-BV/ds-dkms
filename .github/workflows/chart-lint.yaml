@@ -18,19 +18,19 @@ jobs:
           version: v3.16.0
 
       - name: Helm lint — defaults
-        run: helm lint charts/ds-dkms
+        run: helm lint charts/ds-dkms --values charts/ds-dkms/ci/test-seeds-values.yaml
 
       - name: Helm lint — HUS single-site preset (issuer+verifier, watcher on)
-        run: helm lint charts/ds-dkms --values charts/ds-dkms/ci/hus-single-site-values.yaml
+        run: helm lint charts/ds-dkms --values charts/ds-dkms/ci/test-seeds-values.yaml --values charts/ds-dkms/ci/hus-single-site-values.yaml
 
       - name: Helm lint — verifier-only preset (watcher off)
-        run: helm lint charts/ds-dkms --values charts/ds-dkms/ci/verifier-only-values.yaml
+        run: helm lint charts/ds-dkms --values charts/ds-dkms/ci/test-seeds-values.yaml --values charts/ds-dkms/ci/verifier-only-values.yaml
 
       - name: Helm template dry-run (HUS preset)
-        run: helm template ds-dkms charts/ds-dkms --values charts/ds-dkms/ci/hus-single-site-values.yaml > /tmp/rendered-hus.yaml
+        run: helm template ds-dkms charts/ds-dkms --values charts/ds-dkms/ci/test-seeds-values.yaml --values charts/ds-dkms/ci/hus-single-site-values.yaml > /tmp/rendered-hus.yaml
 
       - name: Helm template dry-run (verifier-only)
-        run: helm template ds-dkms charts/ds-dkms --values charts/ds-dkms/ci/verifier-only-values.yaml > /tmp/rendered-verifier.yaml
+        run: helm template ds-dkms charts/ds-dkms --values charts/ds-dkms/ci/test-seeds-values.yaml --values charts/ds-dkms/ci/verifier-only-values.yaml > /tmp/rendered-verifier.yaml
 
       - name: Validate against k8s API with kubeconform
         run: |

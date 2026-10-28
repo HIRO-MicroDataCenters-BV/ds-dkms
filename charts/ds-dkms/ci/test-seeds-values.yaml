@@ -1,0 +1,9 @@
+# CI ONLY. Throwaway seeds so `helm lint` / `helm template` can render the
+# chart, which has no seed defaults. Never use these in a deployment: they are
+# public. Real sites supply seeds from a SealedSecret (see values.yaml header).
+witness:
+  seed: "AC1KwFeOZv96rHX8Tc9RgPuh0S1ICfaGe2tFkf4PeW__"
+watcher:
+  seed: "AJ74mfwc3c55fJycQJlz11JefmjS6lWKBzO9RXfyR5px"
+mesagkesto:
+  seed: "AOvHaki2FNKbP5_itFMDMw25f0igDqWPiKbdlSmxAFU3"
